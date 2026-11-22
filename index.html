@@ -1,0 +1,1043 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<meta name="referrer" content="no-referrer">
+<meta name="theme-color" content="#120d09">
+<title>Le Cripte di Ombraluna</title>
+<style>
+:root { --bg:#120d09; --panel:#1f1710; --panel2:#2a1f15; --line:#4a3826; --text:#f2e6cc; --muted:#b9a684; --gold:#e0b25a; --red:#c0392b; --green:#5fae5a; --blue:#4f8fd6; }
+* { box-sizing: border-box; }
+html, body { margin:0; height:100%; background: radial-gradient(ellipse at 50% 0%, #2b1d12, var(--bg) 70%); color: var(--text); font-family: Georgia, "Palatino Linotype", serif; -webkit-tap-highlight-color: transparent; }
+button { font: inherit; cursor: pointer; }
+h1, h2, h3 { font-weight: 700; letter-spacing: .03em; margin: 0 0 .4em; color: var(--gold); }
+.screen { display: none; min-height: 100%; }
+.screen.on { display: block; }
+.center { max-width: 760px; margin: 0 auto; padding: 18px; }
+.card { background: linear-gradient(180deg, var(--panel2), var(--panel)); border: 1px solid var(--line); border-radius: 14px; padding: 16px; box-shadow: 0 8px 28px rgba(0,0,0,.45); margin-bottom: 14px; }
+.btn { background: linear-gradient(180deg, #3b2b1c, #2a1e13); color: var(--text); border: 1px solid #6a5034; border-radius: 10px; padding: .6em 1em; font-weight: 700; }
+.btn:hover:not(:disabled) { border-color: var(--gold); }
+.btn:disabled { opacity: .4; cursor: default; }
+.btn.gold { background: linear-gradient(180deg, #f0c56a, #b8862f); color: #2a1806; border-color: #8a6420; }
+.btn.red { background: linear-gradient(180deg, #c0392b, #8a1f15); border-color: #5e130c; }
+.btn.big { font-size: 1.15rem; padding: .8em 1.4em; }
+.title { text-align: center; padding: 24px 10px 6px; }
+.title h1 { font-size: clamp(1.8rem, 6vw, 3rem); text-shadow: 0 3px 0 #000, 0 0 30px rgba(224,178,90,.35); }
+.title p { color: var(--muted); margin: 0; }
+.heroes { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; }
+.hpick { border: 2px solid var(--line); border-radius: 12px; padding: 10px; background: rgba(0,0,0,.25); text-align: center; cursor: pointer; user-select: none; }
+.hpick.on { border-color: var(--gold); background: rgba(224,178,90,.12); }
+.hpick .em { font-size: 2.4rem; }
+.hpick input[type=text] { width: 100%; margin-top: 6px; padding: .4em; border-radius: 8px; border: 1px solid var(--line); background: #0e0a07; color: var(--text); font: inherit; }
+.small { font-size: .88rem; } .muted { color: var(--muted); }
+.row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+select { max-width: 100%; font: inherit; padding: .4em; border-radius: 8px; background: #0e0a07; color: var(--text); border: 1px solid var(--line); }
+/* --- gioco */
+#game { display: none; height: 100%; }
+#game.on { display: grid; grid-template-columns: 1fr 330px; grid-template-rows: auto 1fr; height: 100vh; height: 100dvh; }
+.top { grid-column: 1 / -1; display: flex; align-items: center; gap: 10px; padding: 6px 12px; background: #1a120b; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+.top .q { font-weight: 700; color: var(--gold); }
+.top .sp { flex: 1; }
+.top .ib { background: none; border: 1px solid var(--line); color: var(--text); border-radius: 8px; padding: .3em .6em; }
+#mapWrap { position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; padding: 6px; }
+canvas { display: block; touch-action: manipulation; border-radius: 8px; box-shadow: 0 0 0 2px #000, 0 10px 40px rgba(0,0,0,.6); }
+.side { background: var(--panel); border-left: 1px solid var(--line); display: flex; flex-direction: column; min-height: 0; }
+.turn { padding: 10px 12px; border-bottom: 1px solid var(--line); }
+.turn .who { font-size: 1.15rem; font-weight: 700; }
+.stats { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+.stat { background: rgba(0,0,0,.3); border: 1px solid var(--line); border-radius: 8px; padding: 2px 7px; font-size: .85rem; }
+.acts { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+.acts .btn { padding: .55em .4em; font-size: .92rem; }
+.acts .wide { grid-column: 1 / -1; }
+.party { padding: 8px 12px; border-bottom: 1px solid var(--line); display: grid; gap: 4px; }
+.pm { display: flex; align-items: center; gap: 6px; font-size: .88rem; }
+.pm .bar { flex: 1; height: 8px; background: #000; border-radius: 4px; overflow: hidden; }
+.pm .bar i { display: block; height: 100%; background: linear-gradient(90deg, #c0392b, #e67e22); }
+.pm.cur { color: var(--gold); font-weight: 700; }
+.log { flex: 1; overflow: auto; padding: 8px 12px; font-size: .86rem; line-height: 1.35; min-height: 80px; }
+.log p { margin: 0 0 4px; }
+.log .good { color: #9be08f; } .log .bad { color: #ff9a8a; } .log .info { color: var(--gold); }
+.hint { position: absolute; left: 50%; top: 10px; transform: translateX(-50%); background: rgba(10,7,4,.88); border: 1px solid var(--gold); padding: .4em .9em; border-radius: 999px; font-size: .9rem; pointer-events: none; white-space: nowrap; max-width: 95%; overflow: hidden; text-overflow: ellipsis; }
+/* overlay */
+.ov { position: fixed; inset: 0; background: rgba(0,0,0,.72); display: none; align-items: center; justify-content: center; z-index: 50; padding: 14px; }
+.ov.on { display: flex; }
+.ov .box { background: linear-gradient(180deg, #2e2216, #1b130c); border: 2px solid var(--gold); border-radius: 16px; padding: 18px; max-width: 560px; width: 100%; text-align: center; max-height: 92vh; overflow: auto; box-shadow: 0 20px 60px #000; }
+.dice { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin: 8px 0; }
+.die { width: 48px; height: 48px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; background: #f3ead6; color: #222; box-shadow: inset 0 -4px 0 rgba(0,0,0,.2), 0 3px 8px #000; animation: roll .5s ease-out; }
+.die.d6n { font-weight: 800; font-family: system-ui, sans-serif; }
+@keyframes roll { 0% { transform: rotate(-200deg) scale(.4); opacity: 0; } 100% { transform: none; opacity: 1; } }
+.runes { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin: 12px 0; }
+.rune { width: 56px; height: 56px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 2rem; border: 2px solid var(--gold); background: #120c07; }
+.rgrid { display: grid; grid-template-columns: repeat(4, 64px); gap: 8px; justify-content: center; margin: 10px 0; }
+.rgrid button { width: 64px; height: 64px; font-size: 2rem; border-radius: 12px; border: 2px solid var(--line); background: #120c07; color: var(--text); }
+.rgrid button:active { border-color: var(--gold); }
+.shop { display: grid; gap: 8px; text-align: left; }
+.shopitem { display: flex; gap: 8px; align-items: center; background: rgba(0,0,0,.25); border: 1px solid var(--line); border-radius: 10px; padding: 8px; }
+.shopitem .n { flex: 1; }
+.bar2 { height: 10px; background: #000; border-radius: 5px; overflow: hidden; margin: 4px 0; } .bar2 i { display: block; height: 100%; background: var(--gold); transition: width .1s linear; }
+.rules li { margin-bottom: .4em; text-align: left; }
+.safe { font-size: .85rem; color: var(--muted); text-align: center; margin-top: 10px; }
+@media (max-width: 820px) {
+  #game.on { grid-template-columns: 1fr; grid-template-rows: auto auto 1fr; height: auto; min-height: 100dvh; }
+  .side { border-left: 0; border-top: 1px solid var(--line); }
+  .log { max-height: 160px; }
+  #mapWrap { display: block; overflow: auto; height: 58vh; height: 58dvh; padding: 0; -webkit-overflow-scrolling: touch; }
+  canvas { border-radius: 0; }
+}
+</style>
+</head>
+<body>
+
+<!-- =========================================================== INIZIO -->
+<section id="start" class="screen on">
+  <div class="title"><h1>Le Cripte di Ombraluna</h1><p>Un'avventura cooperativa per 1–4 giocatori sullo stesso dispositivo</p></div>
+  <div class="center">
+    <div class="card" id="contBox" hidden>
+      <h2>Continua la campagna</h2>
+      <p id="contInfo" class="muted"></p>
+      <div class="row"><button class="btn gold big" id="contBtn">▶ Continua</button><button class="btn" id="newBtn">Nuova campagna</button></div>
+    </div>
+    <div class="card" id="setupBox">
+      <h2>Scegliete gli eroi</h2>
+      <p class="small muted">Toccate gli eroi che partecipano (almeno 1). Scrivete chi li guida: un giocatore può guidarne anche più di uno.</p>
+      <div class="heroes" id="heroPick"></div>
+      <h3 style="margin-top:14px">Difficoltà</h3>
+      <div class="row">
+        <select id="diff">
+          <option value="0">Facile — rune lente, meno mostri</option>
+          <option value="1" selected>Normale</option>
+          <option value="2">Esperto — nebbia della memoria</option>
+        </select>
+      </div>
+      <p class="small muted">Esperto: le trappole scoperte si vedono solo da vicino (bisogna ricordarsele) e le rune sono di più.</p>
+      <div class="row" style="margin-top:14px"><button class="btn gold big" id="startBtn">⚔ Inizia l'avventura</button><button class="btn" id="rulesBtn">📜 Regole</button></div>
+    </div>
+    <p class="safe">Il gioco funziona interamente sul dispositivo: nessuna connessione, nessun dato inviato, nessun account. Per i più giovani: giocate con la presenza di un adulto.</p>
+  </div>
+</section>
+
+<!-- =========================================================== ACCAMPAMENTO -->
+<section id="camp" class="screen">
+  <div class="title"><h1>L'accampamento</h1><p id="campInfo"></p></div>
+  <div class="center">
+    <div class="card"><h2>Il mercante</h2><p class="small muted">Ogni eroe spende il proprio oro. Gli oggetti restano per tutta la campagna (le pozioni e le pergamene si consumano).</p><div id="shop"></div></div>
+    <div class="row" style="justify-content:center"><button class="btn gold big" id="nextQuestBtn">▶ Prossima missione</button><button class="btn" id="saveExit">Salva ed esci</button></div>
+  </div>
+</section>
+
+<!-- =========================================================== GIOCO -->
+<main id="game">
+  <div class="top">
+    <span class="q" id="qName"></span><span class="small muted" id="qGoal"></span><span class="sp"></span>
+    <span class="small" id="roundLbl"></span>
+    <button class="ib" id="runeHelp" title="Le rune del portale">🔮</button>
+    <button class="ib" id="muteBtn" title="Suoni">🔊</button>
+    <button class="ib" id="helpBtn" title="Regole">❓</button>
+    <button class="ib" id="menuBtn" title="Esci">☰</button>
+  </div>
+  <div id="mapWrap"><canvas id="cv"></canvas><div class="hint" id="hint" hidden></div></div>
+  <aside class="side">
+    <div class="turn"><div class="who" id="who"></div><div class="small muted" id="whoP"></div><div class="stats" id="stats"></div></div>
+    <div class="acts" id="acts"></div>
+    <div class="party" id="party"></div>
+    <div class="log" id="log"></div>
+  </aside>
+</main>
+
+<div class="ov" id="ov"><div class="box" id="ovBox"></div></div>
+
+<script>
+"use strict";
+// =====================================================================
+//  Le Cripte di Ombraluna — gioco originale ispirato ai "dungeon a stanze"
+//  cooperativi. Funziona tutto nel browser: nessun server, nessun dato
+//  inviato. Salvataggio solo in questo dispositivo (localStorage).
+// =====================================================================
+
+// ------------------------------------------------------------ casualità
+let seed = Date.now() % 2147483647;
+function rnd() { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; }
+const ri = (a, b) => a + Math.floor(rnd() * (b - a + 1));
+const pick = (arr) => arr[Math.floor(rnd() * arr.length)];
+const shuffle = (arr) => { for (let i = arr.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [arr[i], arr[j]] = [arr[j], arr[i]]; } return arr; };
+const $ = (id) => document.getElementById(id);
+let SPEED = 1;
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms * SPEED));
+function el(tag, attrs, ...kids) {
+  const e = document.createElement(tag);
+  for (const k in attrs || {}) {
+    if (k === "on") for (const ev in attrs.on) e.addEventListener(ev, attrs.on[ev]);
+    else if (k === "cls") e.className = attrs[k];
+    else if (k === "text") e.textContent = attrs[k];
+    else e.setAttribute(k, attrs[k]);
+  }
+  for (const c of kids.flat()) if (c != null) e.append(c.nodeType ? c : document.createTextNode(String(c)));
+  return e;
+}
+
+// ------------------------------------------------------------ dati di gioco
+const HEROES = {
+  guerriero: { n: "Guerriero", em: "🗡️", color: "#d9534f", body: 8, att: 3, def: 2, desc: "Il più forte. Colpo poderoso: una volta per missione +2 dadi d'attacco." },
+  nano:      { n: "Nano",      em: "⛏️", color: "#e0a030", body: 7, att: 2, def: 2, desc: "Esperto di trappole: le vede quando ci passa accanto e le disinnesca senza attrezzi." },
+  elfa:      { n: "Elfa",      em: "🏹", color: "#4caf50", body: 6, att: 2, def: 2, desc: "Arco: colpisce i nemici lontani che vede (2 dadi). Agile." },
+  maga:      { n: "Maga",      em: "🔮", color: "#6f6af0", body: 4, att: 1, def: 2, desc: "Fragile ma potente: Dardo di fuoco, Cura, Passo veloce, Sonno (una volta ciascuno per missione)." },
+};
+const MONSTERS = {
+  goblin:     { n: "Goblin",          em: "👺", mov: 8, att: 2, def: 1, body: 1 },
+  scheletro:  { n: "Scheletro",       em: "💀", mov: 6, att: 2, def: 2, body: 1 },
+  zombi:      { n: "Zombi",           em: "🧟", mov: 4, att: 2, def: 3, body: 2 },
+  orco:       { n: "Orco",            em: "👹", mov: 7, att: 3, def: 2, body: 2 },
+  ragno:      { n: "Ragno gigante",   em: "🕷️", mov: 8, att: 2, def: 2, body: 2 },
+  troll:      { n: "Troll",           em: "🧌", mov: 5, att: 4, def: 3, body: 4 },
+  capogoblin: { n: "Capo dei Goblin", em: "👺", mov: 8, att: 3, def: 3, body: 4, boss: true },
+  regina:     { n: "Regina Ragno",    em: "🕷️", mov: 7, att: 4, def: 3, body: 5, boss: true },
+  signore:    { n: "Signore delle Ombre", em: "🧛", mov: 6, att: 5, def: 4, body: 7, boss: true },
+};
+const QUESTS = [
+  { n: "La cripta dimenticata", goal: "portal", runes: 3, pool: ["goblin", "scheletro"], per: [1, 2], intro: "Una vecchia cripta sotto il villaggio. Trovate il portale e apritelo con le rune che vi mostrerò: ricordatele bene!" },
+  { n: "Il covo dei goblin", goal: "boss", boss: "capogoblin", runes: 3, pool: ["goblin", "goblin", "orco"], per: [1, 2], intro: "I goblin rubano le pecore del villaggio. Sconfiggete il loro capo, poi uscite dal portale." },
+  { n: "La reliquia perduta", goal: "relic", runes: 4, pool: ["scheletro", "zombi", "goblin"], per: [1, 2], intro: "In una delle stanze è nascosta la Coppa d'argento. Cercate i tesori finché non la trovate e portatela al portale." },
+  { n: "Le sale dei non morti", goal: "portal", runes: 4, pool: ["scheletro", "zombi", "zombi", "scheletro"], per: [1, 3], intro: "Scheletri e zombi infestano queste sale. Le rune sono di più: concentratevi!" },
+  { n: "Il nido della regina", goal: "boss", boss: "regina", runes: 5, pool: ["ragno", "orco", "goblin"], per: [1, 3], intro: "Un nido di ragni giganti. La Regina vi aspetta nella sala del portale." },
+  { n: "Il Signore delle Ombre", goal: "boss", boss: "signore", runes: 5, pool: ["orco", "troll", "scheletro", "zombi"], per: [2, 3], intro: "L'ultima sfida: il Signore delle Ombre. Battetelo e tornate a casa da eroi!" },
+];
+const RUNES = ["☀", "☾", "★", "♦", "♣", "⚡", "❄", "♥"];
+const ITEMS = {
+  spada:     { n: "Spada lunga",          p: 80,  att: 1, no: ["maga"], txt: "+1 dado d'attacco" },
+  bastone:   { n: "Bastone runico",       p: 90,  att: 1, only: ["maga"], txt: "+1 dado d'attacco" },
+  elmo:      { n: "Elmo",                 p: 60,  def: 1, txt: "+1 dado di difesa" },
+  scudo:     { n: "Scudo",                p: 90,  def: 1, no: ["maga", "elfa"], txt: "+1 dado di difesa" },
+  cotta:     { n: "Cotta di maglia",      p: 160, def: 2, no: ["maga"], txt: "+2 dadi di difesa" },
+  mantello:  { n: "Mantello protettivo",  p: 110, def: 1, only: ["maga", "elfa"], txt: "+1 dado di difesa" },
+  amuleto:   { n: "Amuleto della vita",   p: 120, body: 2, txt: "+2 punti vita" },
+  attrezzi:  { n: "Attrezzi da scasso",   p: 40,  txt: "Disinnesca trappole (riesce con 2–6 sul dado)" },
+  pozione:   { n: "Pozione di cura",      p: 30,  cons: true, txt: "Recupera 4 punti vita (anche a un amico vicino)" },
+  pergamena: { n: "Pergamena delle rune", p: 50,  cons: true, txt: "Mostra di nuovo le rune del portale" },
+};
+const SPELLS = {
+  fuoco: { n: "Dardo di fuoco", em: "🔥", txt: "2 ferite a un nemico che vedi (si difende con i suoi scudi)" },
+  cura:  { n: "Cura",           em: "💚", txt: "+4 punti vita a te o a un eroe accanto (anche svenuto)" },
+  passo: { n: "Passo veloce",   em: "💨", txt: "+6 caselle di movimento in questo turno" },
+  sonno: { n: "Sonno",          em: "💤", txt: "Un nemico che vedi dorme per 2 turni" },
+};
+
+// ------------------------------------------------------------ stato
+const W = 27, H = 21;
+let G = null;           // partita in corso
+let camp = null;        // campagna (eroi, oro, oggetti, missione)
+let muted = localStorage.getItem("cripte-mute") === "1";
+
+// ------------------------------------------------------------ suoni (WebAudio, nessun file)
+let AC = null;
+function tone(f, d = 0.12, type = "triangle", v = 0.08, at = 0) {
+  if (muted) return;
+  try {
+    AC = AC || new (window.AudioContext || window.webkitAudioContext)();
+    if (AC.state === "suspended") AC.resume();
+    const t = AC.currentTime + at, o = AC.createOscillator(), g = AC.createGain();
+    o.type = type; o.frequency.setValueAtTime(f, t); g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(0.0001, t + d);
+    o.connect(g); g.connect(AC.destination); o.start(t); o.stop(t + d + 0.02);
+  } catch (e) { /* nessun audio */ }
+}
+const SFX = {
+  dice: () => { for (let i = 0; i < 5; i++) tone(300 + Math.random() * 400, 0.04, "square", 0.03, i * 0.05); },
+  hit: () => { tone(140, 0.18, "sawtooth", 0.09); tone(90, 0.25, "sine", 0.1, 0.05); },
+  block: () => tone(900, 0.12, "triangle", 0.06),
+  step: () => tone(180 + Math.random() * 40, 0.04, "sine", 0.03),
+  trap: () => { tone(500, 0.1, "square", 0.07); tone(120, 0.4, "sawtooth", 0.09, 0.1); },
+  gold: () => { [1200, 1500, 1800].forEach((f, i) => tone(f, 0.12, "triangle", 0.05, i * 0.07)); },
+  magic: () => { [520, 660, 780, 1040].forEach((f, i) => tone(f, 0.25, "sine", 0.05, i * 0.06)); },
+  door: () => tone(220, 0.2, "sawtooth", 0.04),
+  win: () => { [523, 659, 784, 1046].forEach((f, i) => tone(f, 0.35, "triangle", 0.07, i * 0.15)); },
+  lose: () => { [392, 330, 262, 196].forEach((f, i) => tone(f, 0.4, "triangle", 0.07, i * 0.2)); },
+  rune: () => tone(700, 0.12, "sine", 0.06),
+};
+
+// ------------------------------------------------------------ generatore della mappa
+function genMap(level, diff) {
+  for (let attempt = 0; attempt < 200; attempt++) {
+    const t = new Array(W * H).fill(0);         // 0 roccia, 1 stanza, 2 corridoio, 3 porta
+    const roomOf = new Array(W * H).fill(-1);   // stanza a cui appartiene il pavimento (o il muro)
+    const rooms = [];
+    const want = ri(7, 9);
+    for (let k = 0; k < 500 && rooms.length < want; k++) {
+      const w = ri(5, 8), h = ri(5, 7), x = ri(1, W - w - 1), y = ri(1, H - h - 1);
+      if (rooms.some((r) => x < r.x + r.w + 1 && x + w + 1 > r.x && y < r.y + r.h + 1 && y + h + 1 > r.y)) continue;
+      rooms.push({ x, y, w, h, id: rooms.length, seen: false, searched: false, loot: null });
+    }
+    if (rooms.length < 6) continue;
+    const inRect = (x, y) => rooms.findIndex((r) => x >= r.x && x < r.x + r.w && y >= r.y && y < r.y + r.h);
+    for (const r of rooms) for (let y = r.y; y < r.y + r.h; y++) for (let x = r.x; x < r.x + r.w; x++) {
+      roomOf[y * W + x] = r.id;
+      if (x > r.x && x < r.x + r.w - 1 && y > r.y && y < r.y + r.h - 1) t[y * W + x] = 1;
+    }
+    const cx = (r) => r.x + r.w / 2, cy = (r) => r.y + r.h / 2;
+    // albero di collegamento minimo + qualche corridoio in più
+    const edges = [], inTree = new Set([0]);
+    while (inTree.size < rooms.length) {
+      let best = null;
+      for (const a of inTree) for (const b of rooms) if (!inTree.has(b.id)) {
+        const d = Math.abs(cx(rooms[a]) - cx(b)) + Math.abs(cy(rooms[a]) - cy(b));
+        if (!best || d < best.d) best = { a, b: b.id, d };
+      }
+      edges.push([best.a, best.b]); inTree.add(best.b);
+    }
+    for (let k = 0; k < 2; k++) { const a = ri(0, rooms.length - 1), b = ri(0, rooms.length - 1); if (a !== b) edges.push([a, b]); }
+    let ok = true;
+    for (const [a, b] of edges) if (!connect(rooms[a], rooms[b])) { ok = false; break; }
+    if (!ok) continue;
+
+    function doorCandidates(r, o) {
+      const out = [], dx = cx(o) - cx(r), dy = cy(o) - cy(r);
+      const sides = [];
+      if (Math.abs(dx) > Math.abs(dy)) sides.push(dx > 0 ? "E" : "W", dy > 0 ? "S" : "N", dy > 0 ? "N" : "S");
+      else sides.push(dy > 0 ? "S" : "N", dx > 0 ? "E" : "W", dx > 0 ? "W" : "E");
+      for (const s of sides) {
+        const list = [];
+        if (s === "N" || s === "S") { const y = s === "N" ? r.y : r.y + r.h - 1, oy = s === "N" ? y - 1 : y + 1; for (let x = r.x + 1; x < r.x + r.w - 1; x++) list.push([x, y, x, oy]); }
+        else { const x = s === "W" ? r.x : r.x + r.w - 1, ox = s === "W" ? x - 1 : x + 1; for (let y = r.y + 1; y < r.y + r.h - 1; y++) list.push([x, y, ox, y]); }
+        out.push(...shuffle(list));
+      }
+      return out.filter(([, , ox, oy]) => ox >= 0 && oy >= 0 && ox < W && oy < H && inRect(ox, oy) < 0);
+    }
+    function connect(ra, rb) {
+      const ca = doorCandidates(ra, rb).slice(0, 8), cb = doorCandidates(rb, ra).slice(0, 8);
+      for (const A of ca) for (const B of cb) {
+        const path = bfsPath(A[2], A[3], B[2], B[3], (x, y) => inRect(x, y) < 0);
+        if (path) {
+          for (const [x, y] of path) t[y * W + x] = 2;
+          t[A[1] * W + A[0]] = 3; t[B[1] * W + B[0]] = 3;
+          return true;
+        }
+      }
+      return false;
+    }
+    // tutto raggiungibile?
+    const start = rooms[0];
+    const sx = start.x + 1, sy = start.y + 1;
+    const dist = floodDist(sx, sy, (x, y) => t[y * W + x] > 0);
+    if (rooms.some((r) => dist[(r.y + 1) * W + r.x + 1] < 0)) continue;
+    // la stanza più lontana è quella del portale
+    let far = rooms[1], farD = -1;
+    for (const r of rooms) { const d = dist[(r.y + 1) * W + r.x + 1]; if (r.id !== 0 && d > farD) { farD = d; far = r; } }
+    return { t, roomOf, rooms, start, portalRoom: far, doorsOpen: new Set() };
+  }
+  throw new Error("Mappa non generata");
+}
+function bfsPath(x0, y0, x1, y1, ok) {
+  const prev = new Int32Array(W * H).fill(-2), q = [y0 * W + x0];
+  prev[y0 * W + x0] = -1;
+  while (q.length) {
+    const c = q.shift(); const x = c % W, y = (c / W) | 0;
+    if (x === x1 && y === y1) { const p = []; let k = c; while (k !== -1) { p.push([k % W, (k / W) | 0]); k = prev[k]; } return p.reverse(); }
+    for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+      const nx = x + dx, ny = y + dy; if (nx < 0 || ny < 0 || nx >= W || ny >= H) continue;
+      const n = ny * W + nx; if (prev[n] !== -2 || !ok(nx, ny)) continue; prev[n] = c; q.push(n);
+    }
+  }
+  return null;
+}
+function floodDist(x0, y0, ok) {
+  const d = new Int32Array(W * H).fill(-1), q = [y0 * W + x0]; d[q[0]] = 0;
+  while (q.length) { const c = q.shift(), x = c % W, y = (c / W) | 0;
+    for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const nx = x + dx, ny = y + dy; if (nx < 0 || ny < 0 || nx >= W || ny >= H) continue; const n = ny * W + nx; if (d[n] >= 0 || !ok(nx, ny)) continue; d[n] = d[c] + 1; q.push(n); } }
+  return d;
+}
+
+// ------------------------------------------------------------ campagna
+function newCampaign(chosen, diff) {
+  camp = { diff, quest: 0, heroes: chosen.map((c) => ({ key: c.key, player: c.player || HEROES[c.key].n, gold: 0, items: [], spells: c.key === "maga" ? Object.keys(SPELLS) : [] })) };
+  saveCamp();
+}
+function saveCamp() { try { localStorage.setItem("cripte-save", JSON.stringify(camp)); } catch (e) { /* niente */ } }
+function loadCamp() { try { return JSON.parse(localStorage.getItem("cripte-save") || "null"); } catch (e) { return null; } }
+function heroStats(h) {
+  const b = HEROES[h.key]; let att = b.att, def = b.def, body = b.body;
+  for (const it of h.items) { const I = ITEMS[it]; if (!I || I.cons) continue; att += I.att || 0; def += I.def || 0; body += I.body || 0; }
+  return { att, def, body };
+}
+
+// ------------------------------------------------------------ nuova missione
+function startQuest() {
+  const Q = QUESTS[camp.quest], diff = camp.diff, level = camp.quest + 1;
+  const M = genMap(level, diff);
+  G = { Q, level, M, ents: [], seen: new Uint8Array(W * H), traps: [], round: 1, turn: 0, phase: "heroes", log: [],
+        runes: [], mode: null, reach: null, relicRoom: null, relicFound: false, bossDead: !Q.boss, over: false, nextId: 1 };
+  // rune
+  const nR = Math.max(2, Q.runes + (diff === 0 ? -1 : 0) + (diff === 2 ? 1 : 0));
+  for (let i = 0; i < nR; i++) G.runes.push(pick(RUNES));
+  // eroi nella stanza di partenza
+  const s = M.start, cells = [];
+  for (let y = s.y + 1; y < s.y + s.h - 1; y++) for (let x = s.x + 1; x < s.x + s.w - 1; x++) cells.push([x, y]);
+  G.stairs = cells[0];
+  shuffle(cells.slice(1)).slice(0, camp.heroes.length).forEach(([x, y], i) => {
+    const h = camp.heroes[i], st = heroStats(h);
+    G.ents.push({ id: G.nextId++, side: "hero", key: h.key, ref: h, name: HEROES[h.key].n, em: HEROES[h.key].em, color: HEROES[h.key].color,
+      x, y, body: st.body, max: st.body, att: st.att, def: st.def, down: false, power: true, spellsLeft: h.spells.slice() });
+  });
+  // portale
+  const p = M.portalRoom; G.portal = [p.x + Math.floor(p.w / 2), p.y + Math.floor(p.h / 2)];
+  // mostri
+  const free = (x, y) => M.t[y * W + x] === 1 && !entAt(x, y) && !(x === G.portal[0] && y === G.portal[1]);
+  for (const r of M.rooms) {
+    if (r === M.start) continue;
+    const party = camp.heroes.length;
+    let n = ri(Q.per[0], Q.per[1]) + (diff === 2 ? 1 : 0) - (diff === 0 && rnd() < 0.5 ? 1 : 0)
+          + (party >= 3 && level >= 3 && rnd() < 0.5 ? 1 : 0) - (party === 1 && rnd() < 0.5 ? 1 : 0); // più eroi, più mostri
+    if (r === M.portalRoom && Q.boss) n = Math.max(1, n - 1);
+    const spots = shuffle(roomCells(r).filter(([x, y]) => free(x, y)));
+    for (let i = 0; i < n && i < spots.length; i++) addMonster(pick(Q.pool), spots[i][0], spots[i][1]);
+    if (r === M.portalRoom && Q.boss) { const sp = spots.find(([x, y]) => free(x, y)); if (sp) addMonster(Q.boss, sp[0], sp[1]); }
+  }
+  // tesori delle stanze
+  const loot = ["gold", "gold", "gold", "gold", "pozione", "pergamena", "nulla", "nulla", "mostro", "trappola", "gold"];
+  for (const r of M.rooms) r.loot = r === M.start ? "nulla" : pick(loot);
+  if (Q.goal === "relic") { const cand = M.rooms.filter((r) => r !== M.start && r !== M.portalRoom); G.relicRoom = pick(cand).id; M.rooms[G.relicRoom].loot = "reliquia"; }
+  // trappole
+  const nT = 2 + level + (diff === 2 ? 2 : 0) - (diff === 0 ? 1 : 0);
+  const tcells = [];
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    const tt = M.t[y * W + x]; if ((tt === 2 || tt === 1) && M.roomOf[y * W + x] !== M.start.id && !entAt(x, y) && !(x === G.portal[0] && y === G.portal[1])) tcells.push([x, y]);
+  }
+  const kinds = ["fossa", "dardi", "masso"];
+  shuffle(tcells).slice(0, nT).forEach(([x, y]) => G.traps.push({ x, y, kind: pick(kinds), found: false, done: false }));
+  // via!
+  reveal();
+  $("qName").textContent = `Missione ${level}: ${Q.n}`;
+  $("qGoal").textContent = goalText();
+  show("game");
+  resize();
+  addLog(Q.intro, "info");
+  showRunes(true);
+}
+function addMonster(type, x, y) {
+  const m = MONSTERS[type];
+  G.ents.push({ id: G.nextId++, side: "mon", type, name: m.n, em: m.em, x, y, body: m.body, max: m.body, att: m.att, def: m.def, mov: m.mov, boss: !!m.boss, sleep: 0, awake: false });
+}
+const roomCells = (r) => { const o = []; for (let y = r.y + 1; y < r.y + r.h - 1; y++) for (let x = r.x + 1; x < r.x + r.w - 1; x++) o.push([x, y]); return o; };
+const entAt = (x, y) => G.ents.find((e) => e.x === x && e.y === y);
+const heroes = () => G.ents.filter((e) => e.side === "hero");
+const monsters = () => G.ents.filter((e) => e.side === "mon");
+const curHero = () => heroes()[G.turn];
+function goalText() {
+  const Q = G.Q;
+  if (Q.goal === "boss") return G.bossDead ? "· Obiettivo: raggiungete il portale 🌀" : `· Obiettivo: sconfiggete ${MONSTERS[Q.boss].n}`;
+  if (Q.goal === "relic") return G.relicFound ? "· Portate la Coppa al portale 🌀" : "· Obiettivo: trovate la Coppa d'argento (cercate i tesori)";
+  return "· Obiettivo: trovate il portale 🌀 e apritelo con le rune";
+}
+
+// ------------------------------------------------------------ visibilità
+function roomAtInterior(x, y) {
+  const r = G.M.rooms[G.M.roomOf[y * W + x]];
+  return r && x > r.x && x < r.x + r.w - 1 && y > r.y && y < r.y + r.h - 1 ? r : null;
+}
+function revealRoom(r) {
+  if (!r) return;
+  if (!r.seen) { r.seen = true; }
+  for (let y = r.y; y < r.y + r.h; y++) for (let x = r.x; x < r.x + r.w; x++) G.seen[y * W + x] = 1;
+}
+function lineClear(x0, y0, x1, y1, passFn) {
+  let dx = Math.abs(x1 - x0), dy = -Math.abs(y1 - y0), sx = x0 < x1 ? 1 : -1, sy = y0 < y1 ? 1 : -1, err = dx + dy, x = x0, y = y0;
+  for (;;) {
+    if (x === x1 && y === y1) return true;
+    if (!(x === x0 && y === y0) && !passFn(x, y)) return false;
+    const e2 = 2 * err; if (e2 >= dy) { err += dy; x += sx; } if (e2 <= dx) { err += dx; y += sy; }
+  }
+}
+function reveal() {
+  const M = G.M;
+  for (const h of heroes()) {
+    if (h.down) continue;
+    const r = roomAtInterior(h.x, h.y);
+    if (r) revealRoom(r);
+    if (M.t[h.y * W + h.x] === 3) { // sulla porta: si vede la stanza (o le stanze) accanto
+      for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) revealRoom(roomAtInterior(h.x + dx, h.y + dy));
+    }
+    // corridoi in linea di vista
+    for (let y = Math.max(0, h.y - 8); y <= Math.min(H - 1, h.y + 8); y++) for (let x = Math.max(0, h.x - 8); x <= Math.min(W - 1, h.x + 8); x++) {
+      const tt = M.t[y * W + x]; if (tt !== 2 && tt !== 3) continue;
+      if (lineClear(h.x, h.y, x, y, (a, b) => M.t[b * W + a] === 2 || (M.t[b * W + a] === 3 && M.doorsOpen.has(b * W + a)))) {
+        G.seen[y * W + x] = 1;
+        for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [-1, -1], [1, -1], [-1, 1]]) { const nx = x + dx, ny = y + dy; if (nx >= 0 && ny >= 0 && nx < W && ny < H && M.t[ny * W + nx] === 0) G.seen[ny * W + nx] = 1; }
+      }
+    }
+    // il nano vede le trappole accanto
+    if (h.key === "nano") for (const tr of G.traps) if (!tr.found && !tr.done && Math.abs(tr.x - h.x) + Math.abs(tr.y - h.y) === 1) { tr.found = true; addLog("⛏️ Il Nano nota una trappola!", "info"); }
+  }
+  for (const m of monsters()) if (G.seen[m.y * W + m.x] && !m.awake) { m.awake = true; if (m.boss) addLog(`⚠ Appare ${m.name}!`, "bad"); }
+}
+const visibleEnt = (e) => e.side === "hero" || G.seen[e.y * W + e.x];
+
+// ------------------------------------------------------------ disegno
+const cv = $("cv"), ctx = cv.getContext("2d");
+let TS = 32;
+function resize() {
+  if (!G) return;
+  const wrap = $("mapWrap"), small = innerWidth <= 820;
+  const aw = wrap.clientWidth - 12, ah = wrap.clientHeight - 12;
+  // sul telefono le caselle restano grandi (si tocca bene) e la mappa scorre seguendo l'eroe
+  TS = small ? Math.max(30, Math.floor(aw / 12)) : Math.max(14, Math.floor(Math.min(aw / W, ah / H)));
+  const dpr = Math.min(2, devicePixelRatio || 1);
+  cv.width = W * TS * dpr; cv.height = H * TS * dpr; cv.style.width = W * TS + "px"; cv.style.height = H * TS + "px";
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  draw(); follow(true);
+}
+let lastFollow = null;
+function follow(force) {
+  const wrap = $("mapWrap"); if (!G || wrap.scrollWidth <= wrap.clientWidth + 2) return;
+  const e = G.phase === "heroes" ? curHero() : null; if (!e) return;
+  const key = e.id + ":" + e.x + ":" + e.y; if (!force && key === lastFollow) return; lastFollow = key;
+  wrap.scrollTo({ left: e.x * TS + TS / 2 - wrap.clientWidth / 2, top: e.y * TS + TS / 2 - wrap.clientHeight / 2, behavior: force ? "auto" : "smooth" });
+}
+addEventListener("resize", resize);
+function hash(x, y) { let n = x * 374761393 + y * 668265263; n = (n ^ (n >> 13)) * 1274126177; return ((n ^ (n >> 16)) >>> 0) / 4294967295; }
+function draw() {
+  if (!G) return;
+  const M = G.M;
+  ctx.fillStyle = "#050302"; ctx.fillRect(0, 0, W * TS, H * TS);
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    const i = y * W + x, tt = M.t[i], px = x * TS, py = y * TS;
+    if (!G.seen[i]) continue;
+    const n = hash(x, y);
+    if (tt === 0) { ctx.fillStyle = `rgb(${48 + n * 14},${38 + n * 10},${30 + n * 8})`; ctx.fillRect(px, py, TS, TS); ctx.fillStyle = "rgba(0,0,0,.35)"; ctx.fillRect(px, py + TS - 3, TS, 3); continue; }
+    if (tt === 1) { const r = M.rooms[M.roomOf[i]]; const hue = (r.id * 37) % 40; ctx.fillStyle = `hsl(${28 + hue},${18 + n * 6}%,${30 + n * 7}%)`; }
+    else if (tt === 2) ctx.fillStyle = `hsl(30,10%,${22 + n * 6}%)`;
+    else ctx.fillStyle = "#3a2a1a";
+    ctx.fillRect(px, py, TS, TS);
+    ctx.strokeStyle = "rgba(0,0,0,.25)"; ctx.lineWidth = 1; ctx.strokeRect(px + .5, py + .5, TS - 1, TS - 1);
+    if (tt === 3) {
+      const open = M.doorsOpen.has(i);
+      ctx.fillStyle = open ? "#6b4a28" : "#8b5a2b"; const m = TS * 0.12; ctx.fillRect(px + m, py + m, TS - 2 * m, TS - 2 * m);
+      ctx.strokeStyle = "#2a1a0c"; ctx.lineWidth = 2; ctx.strokeRect(px + m, py + m, TS - 2 * m, TS - 2 * m);
+      if (!open) { ctx.fillStyle = "#e0b25a"; ctx.beginPath(); ctx.arc(px + TS * 0.7, py + TS * 0.5, TS * 0.07, 0, 7); ctx.fill(); }
+      else { ctx.fillStyle = "rgba(0,0,0,.45)"; ctx.fillRect(px + TS * 0.3, py + TS * 0.3, TS * 0.4, TS * 0.4); }
+    }
+  }
+  // scale di partenza e portale
+  emoji("🪜", G.stairs[0], G.stairs[1], 0.62, 0.8);
+  if (G.seen[G.portal[1] * W + G.portal[0]]) {
+    const t = performance.now() / 600, [x, y] = G.portal;
+    const g = ctx.createRadialGradient(x * TS + TS / 2, y * TS + TS / 2, 2, x * TS + TS / 2, y * TS + TS / 2, TS * 0.7);
+    g.addColorStop(0, `rgba(160,120,255,${0.6 + Math.sin(t) * 0.2})`); g.addColorStop(1, "rgba(60,20,120,0)");
+    ctx.fillStyle = g; ctx.fillRect(x * TS - TS / 2, y * TS - TS / 2, TS * 2, TS * 2);
+    emoji("🌀", x, y, 0.75);
+  }
+  // trappole scoperte
+  for (const tr of G.traps) {
+    if (!tr.found || !G.seen[tr.y * W + tr.x]) continue;
+    if (G.Q && camp.diff === 2 && !tr.done && !heroes().some((h) => !h.down && Math.abs(h.x - tr.x) + Math.abs(h.y - tr.y) <= 3)) continue; // nebbia della memoria
+    emoji(tr.done ? "✖" : tr.kind === "fossa" ? "🕳️" : tr.kind === "dardi" ? "🎯" : "🪨", tr.x, tr.y, 0.6, tr.done ? 0.35 : 1);
+    if (!tr.done) { ctx.strokeStyle = "rgba(255,80,60,.9)"; ctx.lineWidth = 2; ctx.strokeRect(tr.x * TS + 2, tr.y * TS + 2, TS - 4, TS - 4); }
+  }
+  // caselle raggiungibili
+  if (G.reach && G.mode === "move") {
+    ctx.fillStyle = "rgba(100,220,120,.22)";
+    for (const k of G.reach.keys()) { const x = k % W, y = (k / W) | 0; ctx.fillRect(x * TS + 1, y * TS + 1, TS - 2, TS - 2); }
+  }
+  if (G.targets) {
+    for (const e of G.targets) { ctx.strokeStyle = "#ff5a4a"; ctx.lineWidth = 3; ctx.strokeRect(e.x * TS + 2, e.y * TS + 2, TS - 4, TS - 4); }
+  }
+  // personaggi
+  const cur = G.phase === "heroes" ? curHero() : null;
+  for (const e of G.ents) {
+    if (!visibleEnt(e)) continue;
+    const cx = e.x * TS + TS / 2, cy = e.y * TS + TS / 2, r = TS * 0.44;
+    if (e === cur) { ctx.fillStyle = "rgba(240,197,106,.35)"; ctx.beginPath(); ctx.arc(cx, cy, r + 4, 0, 7); ctx.fill(); }
+    ctx.fillStyle = e.side === "hero" ? (e.down ? "#333" : e.color) : e.boss ? "#5a0d0d" : "#3a1410";
+    ctx.beginPath(); ctx.arc(cx, cy, r, 0, 7); ctx.fill();
+    ctx.strokeStyle = e.side === "hero" ? "#fff6dc" : e.boss ? "#ffcc33" : "#ff6a5a"; ctx.lineWidth = e.boss ? 3 : 2; ctx.stroke();
+    emoji(e.side === "hero" && e.down ? "💤" : e.em, e.x, e.y, e.boss ? 0.7 : 0.6);
+    if (e.side === "mon" && e.sleep) emoji("💤", e.x + 0.3, e.y - 0.3, 0.35);
+    // vita
+    if (e.max > 1 || e.side === "hero") {
+      const w = TS * 0.8, hh = Math.max(3, TS * 0.1);
+      ctx.fillStyle = "#000"; ctx.fillRect(cx - w / 2, e.y * TS + TS - hh - 1, w, hh);
+      ctx.fillStyle = e.side === "hero" ? "#5fae5a" : "#e74c3c"; ctx.fillRect(cx - w / 2, e.y * TS + TS - hh - 1, w * Math.max(0, e.body) / e.max, hh);
+    }
+  }
+}
+function emoji(ch, x, y, scale = 0.6, alpha = 1) {
+  ctx.globalAlpha = alpha; ctx.font = `${Math.floor(TS * scale)}px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif`;
+  ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillStyle = "#fff"; ctx.fillText(ch, x * TS + TS / 2, y * TS + TS / 2 + TS * 0.03); ctx.globalAlpha = 1;
+}
+(function loop() { if (G && !G.over && G.seen[G.portal[1] * W + G.portal[0]]) draw(); setTimeout(() => requestAnimationFrame(loop), 120); })();
+
+// ------------------------------------------------------------ interfaccia
+function show(id) {
+  for (const s of document.querySelectorAll(".screen")) s.classList.remove("on");
+  $("game").classList.toggle("on", id === "game");
+  if (id !== "game") $(id).classList.add("on");
+}
+function addLog(txt, cls = "") { G.log.push([txt, cls]); const p = el("p", { cls, text: txt }); $("log").prepend(p); }
+function hint(t) { const h = $("hint"); h.hidden = !t; h.textContent = t || ""; }
+function render() {
+  draw(); follow(false);
+  const h = curHero();
+  if (G.phase !== "heroes" || !h) { $("acts").replaceChildren(el("div", { cls: "wide muted small", text: "Le creature delle cripte si muovono…" })); renderParty(); return; }
+  $("who").textContent = `${h.em} Turno: ${h.name}`;
+  $("whoP").textContent = `guidato da ${h.ref.player}`;
+  $("roundLbl").textContent = `Round ${G.round}`;
+  const st = [`❤ ${h.body}/${h.max}`, `⚔ ${h.att} dadi`, `🛡 ${h.def} dadi`, `💰 ${h.ref.gold}`];
+  if (G.mp != null) st.push(`👣 ${G.mp} passi`);
+  const pots = h.ref.items.filter((i) => i === "pozione").length, perg = h.ref.items.filter((i) => i === "pergamena").length;
+  if (pots) st.push(`🧪 ×${pots}`); if (perg) st.push(`📜 ×${perg}`);
+  if (h.ref.items.includes("attrezzi")) st.push("🔧");
+  if (G.relicHolder === h.id) st.push("🏆 Coppa");
+  $("stats").replaceChildren(...st.map((s) => el("span", { cls: "stat", text: s })));
+  const A = [];
+  const B = (label, fn, dis, cls = "") => A.push(el("button", { cls: "btn " + cls, on: { click: fn }, ...(dis ? { disabled: "" } : {}) }, label));
+  const moving = G.mp != null;
+  B(moving ? `👣 Muoviti (${G.mp})` : "🎲 Tira e muoviti", () => moving ? enterMove() : rollMove(), G.moveDone || (moving && G.mp <= 0));
+  B("⚔ Attacca", () => chooseAttack(false), G.acted || !adjMonsters(h).length);
+  if (h.key === "elfa") B("🏹 Tira con l'arco", () => chooseAttack(true), G.acted || !rangedTargets(h).length);
+  if (h.key === "maga") B("✨ Incantesimo", spellMenu, G.acted || !h.spellsLeft.length);
+  if (h.key === "guerriero") B(h.power ? "💥 Colpo poderoso" : "💥 (usato)", () => chooseAttack(false, true), G.acted || !h.power || !adjMonsters(h).length);
+  B("💰 Cerca tesori", searchTreasure, G.acted || !canSearchRoom(h));
+  B("🔍 Cerca trappole", searchTraps, G.acted);
+  B("🔧 Disinnesca", chooseDisarm, G.acted || !disarmTargets(h).length);
+  B("🧪 Pozione", usePotion, !pots);
+  if (perg) B("📜 Leggi le rune", () => { h.ref.items.splice(h.ref.items.indexOf("pergamena"), 1); showRunes(false); }, false);
+  const onPortal = h.x === G.portal[0] && h.y === G.portal[1];
+  if (onPortal) B("🌀 Apri il portale", openPortal, G.acted, "gold wide");
+  B("⏭ Fine turno", endTurn, false, "wide");
+  $("acts").replaceChildren(...A);
+  renderParty();
+}
+function renderParty() {
+  $("party").replaceChildren(...heroes().map((e) => el("div", { cls: "pm" + (e === curHero() && G.phase === "heroes" ? " cur" : "") },
+    `${e.down ? "💤" : e.em} ${e.name}`, el("div", { cls: "bar" }, el("i", { style: `width:${Math.max(0, e.body) / e.max * 100}%` })), `${Math.max(0, e.body)}/${e.max}`)));
+}
+function overlay(content, { close = true } = {}) {
+  return new Promise((res) => {
+    const box = $("ovBox"); box.replaceChildren(...(Array.isArray(content) ? content : [content]));
+    if (close) box.append(el("div", { style: "margin-top:12px" }, el("button", { cls: "btn gold", on: { click: () => { $("ov").classList.remove("on"); res(); } } }, "Continua")));
+    $("ov").classList.add("on"); G && (G._ovRes = res);
+  });
+}
+function closeOverlay() { $("ov").classList.remove("on"); }
+
+// ------------------------------------------------------------ dadi
+const rollD6 = () => ri(1, 6);
+const FACE = (v) => (v <= 3 ? "⚔" : v <= 5 ? "🛡" : "⬛");
+async function combat(attacker, defender, nAtt, label) {
+  const atk = [], def = [];
+  for (let i = 0; i < nAtt; i++) atk.push(rollD6());
+  for (let i = 0; i < defender.def; i++) def.push(rollD6());
+  const hits = atk.filter((v) => v <= 3).length;
+  const blocks = def.filter((v) => (defender.side === "hero" ? v === 4 || v === 5 : v === 6)).length;
+  const dmg = Math.max(0, hits - blocks);
+  SFX.dice();
+  const fast = attacker.side === "mon" && G.fast;
+  if (!fast) {
+    await overlayTimed([
+      el("h3", { text: label || `${attacker.em} ${attacker.name} attacca ${defender.em} ${defender.name}` }),
+      el("div", { cls: "small muted", text: "Attacco: ⚔ = colpo" }), el("div", { cls: "dice" }, atk.map((v) => el("div", { cls: "die", text: FACE(v) }))),
+      el("div", { cls: "small muted", text: defender.side === "hero" ? "Difesa dell'eroe: 🛡 = parata" : "Difesa del mostro: ⬛ = parata" }),
+      el("div", { cls: "dice" }, def.map((v) => el("div", { cls: "die", text: FACE(v) }))),
+      el("h3", { text: dmg ? `${hits} colpi − ${blocks} parate = ${dmg} ${dmg === 1 ? "ferita" : "ferite"}!` : hits ? "Tutti i colpi parati!" : "Mancato!" }),
+    ], 1500);
+  }
+  if (dmg) { SFX.hit(); damage(defender, dmg); } else SFX.block();
+  addLog(`${attacker.name} → ${defender.name}: ${hits} colpi, ${blocks} parate, ${dmg} ferite`, dmg ? (defender.side === "hero" ? "bad" : "good") : "");
+  return dmg;
+}
+function overlayTimed(content, ms) {
+  return new Promise((res) => {
+    const box = $("ovBox"); box.replaceChildren(...content, el("div", { cls: "small muted", style: "margin-top:8px", text: "(tocca per continuare)" }));
+    $("ov").classList.add("on");
+    let done = false; const fin = () => { if (done) return; done = true; $("ov").classList.remove("on"); $("ov").onclick = null; res(); };
+    $("ov").onclick = fin; setTimeout(fin, ms * SPEED);
+  });
+}
+function damage(e, n) {
+  e.body -= n;
+  if (e.body > 0) return;
+  if (e.side === "mon") {
+    G.ents = G.ents.filter((x) => x !== e);
+    addLog(`☠ ${e.name} è sconfitto!`, "good");
+    if (e.boss) { G.bossDead = true; $("qGoal").textContent = goalText(); addLog("🏆 Il capo è caduto! Ora raggiungete il portale.", "info"); }
+  } else {
+    const pi = e.ref.items.indexOf("pozione");
+    if (pi >= 0) { e.ref.items.splice(pi, 1); e.body = Math.min(e.max, 4); addLog(`🧪 ${e.name} beve al volo una pozione e si rialza!`, "good"); return; }
+    e.body = 0; e.down = true; addLog(`💤 ${e.name} è svenuto! Un amico accanto può curarlo con una pozione o un incantesimo.`, "bad");
+    if (G.relicHolder === e.id) addLog("La Coppa resta a terra con lui: portatelo via curandolo!", "bad");
+  }
+}
+
+// ------------------------------------------------------------ movimento
+function rollMove() {
+  const h = curHero(); const a = rollD6(), b = rollD6();
+  G.mp = a + b + (G.bonusMove || 0); G.bonusMove = 0;
+  SFX.dice();
+  overlayTimed([el("h3", { text: `${h.em} ${h.name} tira per muoversi` }), el("div", { cls: "dice" }, el("div", { cls: "die d6n", text: a }), el("div", { cls: "die d6n", text: b })), el("h3", { text: `${G.mp} caselle` })], 1000)
+    .then(() => { enterMove(); });
+}
+function computeReach(h, mp) {
+  const M = G.M, dist = new Map(), prev = new Map(), q = [[h.x, h.y]];
+  dist.set(h.y * W + h.x, 0);
+  while (q.length) {
+    const [x, y] = q.shift(), d = dist.get(y * W + x);
+    if (d >= mp) continue;
+    for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+      const nx = x + dx, ny = y + dy, k = ny * W + nx;
+      if (nx < 0 || ny < 0 || nx >= W || ny >= H || dist.has(k) || M.t[k] === 0) continue;
+      const o = entAt(nx, ny); if (o && !(o.side === "hero" && !o.down)) continue;  // si passa sopra gli amici in piedi, non sui mostri
+      if (G.traps.some((t) => t.x === nx && t.y === ny && t.found && !t.done)) continue; // le trappole note si evitano
+      dist.set(k, d + 1); prev.set(k, y * W + x); q.push([nx, ny]);
+    }
+  }
+  for (const k of [...dist.keys()]) { const x = k % W, y = (k / W) | 0; const o = entAt(x, y); if ((o && o !== h) || k === h.y * W + h.x) dist.delete(k); }
+  return { dist, prev };
+}
+function enterMove() {
+  const h = curHero(); if (G.mp == null || G.mp <= 0) return;
+  G.mode = "move"; const R = computeReach(h, G.mp); G.reach = R.dist; G.prev = R.prev;
+  hint("Tocca una casella verde per muoverti"); draw();
+}
+async function moveTo(x, y) {
+  const h = curHero(), k = y * W + x;
+  if (!G.reach || !G.reach.has(k)) return;
+  const path = []; let c = k; const start = h.y * W + h.x;
+  while (c !== start) { path.unshift(c); c = G.prev.get(c); }
+  G.mode = null; G.reach = null; hint(""); G.busy = true;
+  for (const c of path) {
+    const nx = c % W, ny = (c / W) | 0;
+    const o = G.ents.find((e) => e !== h && e.x === nx && e.y === ny); // un amico su cui si passa
+    h.x = nx; h.y = ny; G.mp--; G.moved = true; SFX.step();
+    if (G.M.t[c] === 3 && !G.M.doorsOpen.has(c)) { G.M.doorsOpen.add(c); SFX.door(); }
+    const before = monsters().filter((m) => m.awake).length;
+    reveal(); draw(); await sleep(110);
+    const tr = G.traps.find((t) => t.x === nx && t.y === ny && !t.done && !t.found);
+    if (tr && !o) { await springTrap(h, tr); G.mp = 0; break; }
+    if (monsters().filter((m) => m.awake).length > before && !o && c !== path[path.length - 1]) { addLog("👀 Avvistati dei nemici: ti fermi.", "info"); break; }
+  }
+  G.busy = false;
+  if (G.mp <= 0) G.moveDone = true;
+  checkLose(); render();
+}
+async function springTrap(h, tr) {
+  tr.found = true; tr.done = tr.kind !== "fossa"; SFX.trap();
+  let dmg = 0, txt = "";
+  if (tr.kind === "fossa") { dmg = 1; txt = "una fossa nascosta! (1 ferita)"; tr.done = true; }
+  else if (tr.kind === "dardi") { dmg = rollD6() <= 3 ? 2 : 1; txt = `dardi avvelenati! (${dmg} ${dmg === 1 ? "ferita" : "ferite"})`; }
+  else { const d = [rollD6(), rollD6(), rollD6()]; dmg = d.filter((v) => v <= 3).length; txt = `un masso che cade! (${dmg} ferite)`; }
+  await overlayTimed([el("h2", { text: "💥 Trappola!" }), el("p", { text: `${h.name} fa scattare ${txt}` })], 1500);
+  addLog(`💥 ${h.name}: ${txt}`, "bad");
+  if (dmg) damage(h, dmg);
+}
+
+// ------------------------------------------------------------ azioni
+const adj = (a, b) => Math.abs(a.x - b.x) + Math.abs(a.y - b.y) === 1;
+const adjMonsters = (h) => monsters().filter((m) => adj(m, h) && visibleEnt(m));
+function canSee(a, b) {
+  return lineClear(a.x, a.y, b.x, b.y, (x, y) => {
+    const tt = G.M.t[y * W + x]; if (tt === 0) return false;
+    if (tt === 3 && !G.M.doorsOpen.has(y * W + x)) return false;
+    return !G.ents.some((e) => e.x === x && e.y === y && !(e.side === "hero" && e.down));
+  });
+}
+const rangedTargets = (h) => monsters().filter((m) => visibleEnt(m) && !adj(m, h) && canSee(h, m));
+function startAction() { // dopo un'azione non si può più continuare il movimento iniziato
+  G.acted = true; if (G.moved && G.mp != null) { G.mp = 0; G.moveDone = true; }
+  G.mode = null; G.reach = null; G.targets = null; hint("");
+}
+function chooseAttack(ranged, power) {
+  const h = curHero(); const list = ranged ? rangedTargets(h) : adjMonsters(h);
+  if (list.length === 1) return doAttack(list[0], ranged, power);
+  G.mode = "target"; G.targets = list; G.onTarget = (m) => doAttack(m, ranged, power);
+  hint("Tocca il nemico da colpire"); draw();
+}
+async function doAttack(m, ranged, power) {
+  const h = curHero(); startAction(); G.busy = true;
+  let n = ranged ? 2 + (h.ref.items.includes("arco") ? 1 : 0) : h.att;
+  if (power) { n += 2; h.power = false; }
+  await combat(h, m, n, `${h.em} ${h.name} ${ranged ? "scocca una freccia contro" : power ? "sferra un colpo poderoso a" : "attacca"} ${m.em} ${m.name}`);
+  G.busy = false; render();
+}
+function spellMenu() {
+  const h = curHero();
+  overlay([el("h2", { text: "✨ Incantesimi" }), el("div", { cls: "shop" }, h.spellsLeft.map((k) => el("div", { cls: "shopitem" },
+    el("span", { cls: "n" }, el("b", { text: `${SPELLS[k].em} ${SPELLS[k].n}` }), el("br"), el("span", { cls: "small muted", text: SPELLS[k].txt })),
+    el("button", { cls: "btn gold", on: { click: () => { closeOverlay(); castSpell(k); } } }, "Lancia"))))]);
+}
+function castSpell(k) {
+  const h = curHero();
+  if (k === "passo") {
+    const hadMp = G.mp != null, moved = G.moved;
+    startAction(); h.spellsLeft = h.spellsLeft.filter((s) => s !== k); SFX.magic();
+    if (!hadMp) G.bonusMove = 6;                       // si aggiunge al prossimo tiro
+    else { G.mp = (moved ? 0 : G.mp) + 6; G.moveDone = false; G.moved = false; }
+    addLog("💨 Passo veloce: +6 caselle!", "good"); render(); return; }
+  let list;
+  if (k === "cura") list = heroes().filter((e) => e === h || adj(e, h));
+  else list = monsters().filter((m) => visibleEnt(m) && canSee(h, m));
+  if (!list.length) { addLog("Nessun bersaglio per l'incantesimo.", "info"); return; }
+  G.mode = "target"; G.targets = list; hint(k === "cura" ? "Tocca l'eroe da curare" : "Tocca il nemico");
+  G.onTarget = async (t) => {
+    startAction(); h.spellsLeft = h.spellsLeft.filter((s) => s !== k); SFX.magic(); G.busy = true;
+    if (k === "cura") { const was = t.down; t.body = Math.min(t.max, Math.max(0, t.body) + 4); t.down = false; addLog(`💚 ${t.name} ${was ? "si rialza" : "recupera vita"}!`, "good"); }
+    if (k === "sonno") { t.sleep = 2; addLog(`💤 ${t.name} si addormenta.`, "good"); }
+    if (k === "fuoco") { const def = []; for (let i = 0; i < t.def; i++) def.push(rollD6()); const b = def.filter((v) => v === 6).length; const d = Math.max(0, 2 - b);
+      await overlayTimed([el("h3", { text: `🔥 Dardo di fuoco su ${t.em} ${t.name}` }), el("div", { cls: "dice" }, def.map((v) => el("div", { cls: "die", text: FACE(v) }))), el("h3", { text: `${d} ferite` })], 1300);
+      if (d) { SFX.hit(); damage(t, d); } addLog(`🔥 Dardo di fuoco: ${d} ferite a ${t.name}`, "good"); }
+    G.busy = false; render();
+  };
+  draw();
+}
+function canSearchRoom(h) { const r = roomAtInterior(h.x, h.y); return !!r && !monsters().some((m) => roomAtInterior(m.x, m.y) === r && m.awake); }
+async function searchTreasure() {
+  const h = curHero(), r = roomAtInterior(h.x, h.y); startAction(); G.busy = true;
+  let res = r.searched ? "nulla" : r.loot; r.searched = true;
+  let title = "", txt = "";
+  if (res === "gold") { const g = ri(2, 6) * 10; h.ref.gold += g; SFX.gold(); title = "💰 Oro!"; txt = `${h.name} trova ${g} monete d'oro.`; }
+  else if (res === "pozione") { h.ref.items.push("pozione"); SFX.gold(); title = "🧪 Una pozione!"; txt = "Recupera 4 punti vita quando la usi."; }
+  else if (res === "pergamena") { h.ref.items.push("pergamena"); SFX.gold(); title = "📜 Pergamena delle rune"; txt = "Leggila quando vuoi rivedere le rune del portale."; }
+  else if (res === "reliquia") { G.relicFound = true; G.relicHolder = h.id; SFX.win(); title = "🏆 La Coppa d'argento!"; txt = "Portatela al portale!"; $("qGoal").textContent = goalText(); }
+  else if (res === "mostro") {
+    const spot = [[1, 0], [-1, 0], [0, 1], [0, -1]].map(([dx, dy]) => [h.x + dx, h.y + dy]).find(([x, y]) => G.M.t[y * W + x] === 1 && !entAt(x, y));
+    title = "👺 Un mostro errante!"; txt = "Mentre cercavate, qualcosa è uscito dall'ombra…";
+    if (spot) { addMonster(pick(G.Q.pool), spot[0], spot[1]); reveal(); }
+  }
+  else if (res === "trappola") { title = "💥 Era una trappola!"; txt = "Un ago avvelenato nel baule: 1 ferita."; SFX.trap(); damage(h, 1); }
+  else { title = "Niente…"; txt = r.searched && res === "nulla" ? "Polvere e ragnatele." : "Polvere e ragnatele."; }
+  addLog(`${title} ${txt}`, res === "mostro" || res === "trappola" ? "bad" : "good");
+  await overlayTimed([el("h2", { text: title }), el("p", { text: txt })], 1600);
+  G.busy = false; checkLose(); render();
+}
+function searchTraps() {
+  const h = curHero(); startAction(); let n = 0;
+  const r = roomAtInterior(h.x, h.y), range = h.key === "nano" ? 7 : 4;
+  for (const t of G.traps) {
+    if (t.found || t.done) continue;
+    const inRoom = r && roomAtInterior(t.x, t.y) === r;
+    const near = Math.abs(t.x - h.x) + Math.abs(t.y - h.y) <= range && G.seen[t.y * W + t.x] && canSee(h, t);
+    if (inRoom || near) { t.found = true; n++; }
+  }
+  addLog(n ? `🔍 ${h.name} scopre ${n} ${n === 1 ? "trappola" : "trappole"}! Ricordate dove sono.` : `🔍 ${h.name} non trova trappole qui intorno.`, n ? "info" : "");
+  if (n) SFX.rune();
+  render();
+}
+const disarmTargets = (h) => G.traps.filter((t) => t.found && !t.done && Math.abs(t.x - h.x) + Math.abs(t.y - h.y) === 1 && (h.key === "nano" || h.ref.items.includes("attrezzi")));
+function chooseDisarm() {
+  const h = curHero(), list = disarmTargets(h);
+  const go = (t) => {
+    startAction();
+    if (h.key === "nano" || rollD6() >= 2) { t.done = true; addLog(`🔧 ${h.name} disinnesca la trappola.`, "good"); SFX.block(); }
+    else { addLog(`🔧 Oops! La trappola scatta in faccia a ${h.name}: 1 ferita.`, "bad"); t.done = true; SFX.trap(); damage(h, 1); }
+    render();
+  };
+  if (list.length === 1) return go(list[0]);
+  G.mode = "target"; G.targets = list; G.onTarget = go; hint("Tocca la trappola da disinnescare"); draw();
+}
+function usePotion() {
+  const h = curHero(); const list = heroes().filter((e) => (e === h || adj(e, h)) && e.body < e.max);
+  if (!list.length) { addLog("Nessuno ha bisogno di cure.", "info"); return; }
+  const go = (t) => { h.ref.items.splice(h.ref.items.indexOf("pozione"), 1); const was = t.down; t.body = Math.min(t.max, Math.max(0, t.body) + 4); t.down = false; SFX.magic(); addLog(`🧪 ${t.name} ${was ? "si rialza" : "recupera 4 punti vita"}.`, "good"); G.mode = null; G.targets = null; hint(""); render(); };
+  if (list.length === 1) return go(list[0]);
+  G.mode = "target"; G.targets = list; G.onTarget = go; hint("Tocca chi deve bere la pozione"); draw();
+}
+
+// ------------------------------------------------------------ rune e portale
+function showRunes(start) {
+  const per = camp.diff === 0 ? 1600 : camp.diff === 2 ? 900 : 1200, total = (1500 + per * G.runes.length) * SPEED;
+  return new Promise((res) => {
+    const bar = el("i", { style: "width:100%" });
+    const box = $("ovBox");
+    box.replaceChildren(el("h2", { text: start ? "🔮 Memorizzate le rune del portale!" : "📜 Le rune del portale" }),
+      el("p", { cls: "small muted", text: "Per uscire dovrete ripeterle nello stesso ordine. Guardatele bene…" }),
+      el("div", { cls: "runes" }, G.runes.map((r) => el("div", { cls: "rune", text: r }))), el("div", { cls: "bar2" }, bar));
+    $("ov").classList.add("on"); $("ov").onclick = null; SFX.rune();
+    const t0 = performance.now();
+    const tick = () => {
+      const p = 1 - (performance.now() - t0) / total; bar.style.width = Math.max(0, p * 100) + "%";
+      if (p > 0) return requestAnimationFrame(tick);
+      box.replaceChildren(el("h2", { text: "Le rune sono svanite!" }), el("p", { text: start ? "Ricordatele: le scoprirete solo leggendo le pergamene." : "Speriamo le abbiate ricordate." }),
+        el("button", { cls: "btn gold", on: { click: () => { $("ov").classList.remove("on"); render(); res(); } } }, start ? "⚔ Si parte!" : "Continua"));
+    };
+    requestAnimationFrame(tick);
+  });
+}
+function openPortal() {
+  const h = curHero(), Q = G.Q;
+  if (Q.goal === "boss" && !G.bossDead) { addLog(`Il portale non si apre: prima sconfiggete ${MONSTERS[Q.boss].n}!`, "bad"); return; }
+  if (Q.goal === "relic" && G.relicHolder !== h.id) { addLog(G.relicFound ? "Serve chi porta la Coppa d'argento!" : "Il portale vuole la Coppa d'argento. Trovatela prima!", "bad"); return; }
+  const input = [];
+  const slots = el("div", { cls: "runes" }, G.runes.map(() => el("div", { cls: "rune", text: "?" })));
+  const upd = () => [...slots.children].forEach((s, i) => (s.textContent = input[i] || "?"));
+  const grid = el("div", { cls: "rgrid" }, RUNES.map((r) => el("button", { on: { click: () => { if (input.length < G.runes.length) { input.push(r); SFX.rune(); upd(); if (input.length === G.runes.length) check(); } } } }, r)));
+  const box = $("ovBox");
+  box.replaceChildren(el("h2", { text: "🌀 Il portale" }), el("p", { text: `Toccate le ${G.runes.length} rune nell'ordine giusto.` }), slots, grid,
+    el("div", { cls: "row", style: "justify-content:center" },
+      el("button", { cls: "btn", on: { click: () => { input.pop(); upd(); } } }, "⌫ Cancella"),
+      el("button", { cls: "btn", on: { click: () => $("ov").classList.remove("on") } }, "Annulla")));
+  $("ov").onclick = null; $("ov").classList.add("on");
+  async function check() {
+    await sleep(350);
+    if (input.join("") === G.runes.join("")) { $("ov").classList.remove("on"); victory(); return; }
+    $("ov").classList.remove("on"); startAction(); SFX.trap();
+    addLog("❌ Rune sbagliate! Il portale si richiude e sveglia i guardiani…", "bad");
+    const spots = [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [-1, -1]].map(([dx, dy]) => [h.x + dx * 2, h.y + dy * 2]).filter(([x, y]) => x >= 0 && y >= 0 && x < W && y < H && G.M.t[y * W + x] > 0 && !entAt(x, y));
+    if (spots.length) addMonster(pick(G.Q.pool), spots[0][0], spots[0][1]);
+    reveal(); render();
+  }
+}
+
+// ------------------------------------------------------------ turni
+function resetTurn() { G.mp = null; G.moved = false; G.moveDone = false; G.acted = false; G.mode = null; G.reach = null; G.targets = null; G.bonusMove = 0; hint(""); }
+function endTurn() {
+  if (G.busy) return;
+  resetTurn();
+  let i = G.turn + 1;
+  while (i < heroes().length && heroes()[i].down) i++;
+  if (i < heroes().length) { G.turn = i; render(); return; }
+  monstersTurn();
+}
+async function monstersTurn() {
+  G.phase = "monsters"; G.busy = true; render();
+  for (const m of monsters().slice()) {
+    if (G.over) return;
+    if (!G.ents.includes(m) || !m.awake) continue;
+    if (m.sleep) { m.sleep--; continue; }
+    const alive = heroes().filter((h) => !h.down);
+    if (!alive.length) break;
+    let target = alive.find((h) => adj(h, m));
+    if (!target) {
+      // cammina verso l'eroe più vicino
+      const pass = (x, y) => G.M.t[y * W + x] > 0 && !G.ents.some((e) => e !== m && e.x === x && e.y === y);
+      let best = null;
+      for (const h of alive) for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+        const gx = h.x + dx, gy = h.y + dy; if (gx < 0 || gy < 0 || gx >= W || gy >= H || !pass(gx, gy)) continue;
+        const p = bfsPath(m.x, m.y, gx, gy, pass); if (p && (!best || p.length < best.length)) best = p;
+      }
+      if (best) {
+        for (const [x, y] of best.slice(1, m.mov + 1)) {
+          m.x = x; m.y = y; const c = y * W + x; if (G.M.t[c] === 3) G.M.doorsOpen.add(c);
+          if (G.seen[c]) { draw(); await sleep(G.fast ? 0 : 90); }
+        }
+      }
+      target = alive.find((h) => adj(h, m));
+    }
+    if (target && G.seen[m.y * W + m.x]) await combat(m, target, m.att);
+    else if (target) { await combat(m, target, m.att); }
+    if (heroes().every((h) => h.down)) break;
+  }
+  G.busy = false; G.phase = "heroes"; G.round++;
+  resetTurn();
+  G.turn = heroes().findIndex((h) => !h.down);
+  if (checkLose()) return;
+  addLog(`— Round ${G.round} —`, "info");
+  render();
+}
+function checkLose() {
+  if (G.over) return true;
+  if (heroes().every((h) => h.down)) { G.over = true; SFX.lose();
+    overlay([el("h2", { text: "💀 Sconfitta…" }), el("p", { text: "Tutti gli eroi sono svenuti. Vi risvegliate all'accampamento: l'oro trovato in questa missione è perduto, ma potete riprovare (la cripta sarà diversa)." })])
+      .then(() => { camp.heroes.forEach((h) => { h.gold = h._goldStart ?? h.gold; h.items = h._itemsStart ?? h.items; }); saveCamp(); openCamp(); });
+    return true;
+  }
+  return false;
+}
+function victory() {
+  G.over = true; SFX.win();
+  const bonus = 30 + 20 * G.level;
+  camp.heroes.forEach((h) => (h.gold += bonus));
+  camp.quest++;
+  saveCamp();
+  const last = camp.quest >= QUESTS.length;
+  overlay([el("h2", { text: last ? "🏆 Campagna completata!" : "🌀 Missione compiuta!" }),
+    el("p", { text: last ? "Il Signore delle Ombre è sconfitto e Ombraluna è salva. Siete leggende!" : `Il portale vi riporta all'accampamento. Ogni eroe riceve ${bonus} monete d'oro di ricompensa.` }),
+    el("p", { cls: "small muted", text: `Round giocati: ${G.round}` })]).then(() => {
+    if (last) { localStorage.removeItem("cripte-save"); location.reload(); } else openCamp();
+  });
+}
+
+// ------------------------------------------------------------ input sulla mappa
+cv.addEventListener("click", (ev) => {
+  if (!G || G.busy || G.phase !== "heroes") return;
+  const r = cv.getBoundingClientRect(), x = Math.floor((ev.clientX - r.left) / TS), y = Math.floor((ev.clientY - r.top) / TS);
+  if (G.mode === "move") return moveTo(x, y);
+  if (G.mode === "target") {
+    const t = G.targets.find((e) => e.x === x && e.y === y);
+    if (t) { const fn = G.onTarget; G.mode = null; G.targets = null; hint(""); fn(t); }
+    return;
+  }
+  // tocco su un mostro: informazioni
+  const e = G.ents.find((e) => e.x === x && e.y === y && visibleEnt(e));
+  if (e) addLog(`${e.em} ${e.name}: ❤ ${Math.max(0, e.body)}/${e.max} · ⚔ ${e.att} · 🛡 ${e.def}${e.mov ? " · 👣 " + e.mov : ""}`, "info");
+});
+
+// ------------------------------------------------------------ accampamento e negozio
+function openCamp() {
+  G = null; show("camp");
+  const Q = QUESTS[camp.quest];
+  $("campInfo").textContent = Q ? `Prossima missione ${camp.quest + 1} di ${QUESTS.length}: ${Q.n}` : "";
+  const box = $("shop"); box.replaceChildren();
+  for (const h of camp.heroes) {
+    const st = heroStats(h);
+    const sec = el("div", { cls: "card" }, el("h3", { text: `${HEROES[h.key].em} ${HEROES[h.key].n} (${h.player}) — 💰 ${h.gold}` }),
+      el("div", { cls: "small muted", text: `❤ ${st.body} · ⚔ ${st.att} · 🛡 ${st.def}` + (h.items.length ? " · " + h.items.map((i) => ITEMS[i].n).join(", ") : "") }));
+    const list = el("div", { cls: "shop" });
+    for (const [k, I] of Object.entries(ITEMS)) {
+      if (I.no && I.no.includes(h.key)) continue; if (I.only && !I.only.includes(h.key)) continue;
+      const owned = !I.cons && h.items.includes(k);
+      list.append(el("div", { cls: "shopitem" }, el("span", { cls: "n" }, el("b", { text: I.n }), " ", el("span", { cls: "small muted", text: I.txt })),
+        el("button", { cls: "btn", ...(owned || h.gold < I.p ? { disabled: "" } : {}), on: { click: () => { h.gold -= I.p; h.items.push(k); SFX.gold(); saveCamp(); openCamp(); } } }, owned ? "✔ hai" : `${I.p} 💰`)));
+    }
+    sec.append(list); box.append(sec);
+  }
+}
+$("nextQuestBtn").onclick = () => { camp.heroes.forEach((h) => { h._goldStart = h.gold; h._itemsStart = h.items.slice(); }); saveCamp(); $("log").replaceChildren(); seed = Date.now() % 2147483647; startQuest(); };
+$("saveExit").onclick = () => { saveCamp(); location.reload(); };
+
+// ------------------------------------------------------------ schermata iniziale
+const chosen = new Map();
+function renderPick() {
+  $("heroPick").replaceChildren(...Object.entries(HEROES).map(([k, h]) => {
+    const on = chosen.has(k);
+    const inp = el("input", { type: "text", placeholder: "Nome del giocatore", maxlength: "20", value: chosen.get(k) || "" });
+    inp.addEventListener("click", (e) => e.stopPropagation());
+    inp.addEventListener("input", () => chosen.set(k, inp.value));
+    const card = el("div", { cls: "hpick" + (on ? " on" : ""), on: { click: () => { on ? chosen.delete(k) : chosen.set(k, ""); renderPick(); } } },
+      el("div", { cls: "em", text: h.em }), el("b", { text: h.n }), el("div", { cls: "small muted", text: `❤ ${h.body} · ⚔ ${h.att} · 🛡 ${h.def}` }), el("div", { cls: "small", text: h.desc }));
+    if (on) card.append(inp);
+    return card;
+  }));
+}
+renderPick();
+$("startBtn").onclick = () => {
+  if (!chosen.size) { alert("Scegliete almeno un eroe."); return; }
+  newCampaign([...chosen.entries()].map(([key, player]) => ({ key, player: player.trim() })), Number($("diff").value));
+  camp.heroes.forEach((h) => { h._goldStart = 0; h._itemsStart = []; });
+  startQuest();
+};
+const saved = loadCamp();
+if (saved && saved.heroes && saved.quest < QUESTS.length) {
+  $("contBox").hidden = false;
+  $("contInfo").textContent = `Missione ${saved.quest + 1}: ${QUESTS[saved.quest].n} · Eroi: ${saved.heroes.map((h) => HEROES[h.key].n).join(", ")}`;
+  $("contBtn").onclick = () => { camp = saved; openCamp(); };
+  $("newBtn").onclick = () => { if (confirm("Cancellare la campagna salvata e ricominciare?")) { localStorage.removeItem("cripte-save"); $("contBox").hidden = true; } };
+}
+function rules() {
+  const box = [el("h2", { text: "📜 Come si gioca" }), el("ul", { cls: "rules small" },
+    el("li", { text: "Si gioca a turni: ogni eroe, nel suo turno, può MUOVERSI (tira 2 dadi: tante caselle) e fare UN'AZIONE, prima o dopo il movimento." }),
+    el("li", { text: "Azioni: attaccare un nemico accanto, tirare con l'arco (Elfa), lanciare un incantesimo (Maga), cercare tesori nella stanza, cercare trappole, disinnescare una trappola." }),
+    el("li", { text: "Combattimento: chi attacca tira i suoi dadi ⚔. Chi si difende tira i suoi dadi: gli eroi parano con 🛡, i mostri con ⬛. Ogni colpo non parato è una ferita." }),
+    el("li", { text: "Le stanze e i corridoi si scoprono esplorando. Le trappole sono nascoste: cercatele prima di passare! Quelle scoperte si evitano o si disinnescano." }),
+    el("li", { text: "All'inizio vengono mostrate le RUNE del portale: ricordatele! Per uscire bisogna ripeterle nell'ordine giusto. Se sbagliate, arrivano i guardiani." }),
+    el("li", { text: "Dopo gli eroi si muovono le creature. Un eroe a 0 punti vita sviene: un amico accanto può rialzarlo con una pozione o con l'incantesimo Cura." }),
+    el("li", { text: "Tra una missione e l'altra, all'accampamento, si compra l'equipaggiamento con l'oro trovato. Collaborate: si vince insieme!" }),
+    el("li", { text: "Tocca un mostro per vederne le caratteristiche. Il pulsante 🔮 in alto ricorda quante rune servono." }))];
+  if (G) overlay(box); else { $("ovBox").replaceChildren(...box, el("button", { cls: "btn gold", on: { click: () => $("ov").classList.remove("on") } }, "Ho capito")); $("ov").classList.add("on"); }
+}
+$("rulesBtn").onclick = rules; $("helpBtn").onclick = rules;
+$("muteBtn").textContent = muted ? "🔇" : "🔊";
+$("muteBtn").onclick = () => { muted = !muted; localStorage.setItem("cripte-mute", muted ? "1" : "0"); $("muteBtn").textContent = muted ? "🔇" : "🔊"; };
+$("runeHelp").onclick = () => addLog(`🔮 Il portale chiede ${G.runes.length} rune. Le pergamene le mostrano di nuovo.`, "info");
+$("menuBtn").onclick = () => { if (confirm("Uscire? La missione in corso andrà ripetuta (gli acquisti restano).")) { camp.heroes.forEach((h) => { h.gold = h._goldStart ?? h.gold; h.items = h._itemsStart ?? h.items; }); saveCamp(); location.reload(); } };
+window.__game = () => ({ G, camp });   // solo per le prove automatiche
+window.__speed = (s) => { SPEED = s; };
+</script>
+</body>
+</html>
